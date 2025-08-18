@@ -9,7 +9,7 @@ import path from 'path';
 // ====================
 export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
   try {
-    const id = await context.params.id;
+    const id = context.params.id;
 
     const activity = await prisma.activity.findUnique({ where: { id } });
     if (!activity) {

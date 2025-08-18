@@ -55,7 +55,7 @@ async function handleFileUpload(file: File): Promise<string> {
 // ====================
 export async function PUT(request: NextRequest, context : { params: { id: string } }) {
   try {
-    const id = await context.params.id;
+    const id = context.params.id;
     const formData = await request.formData();
 
     const updateData: any = {

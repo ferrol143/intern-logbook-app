@@ -7,7 +7,7 @@ export async function GET(
   context: { params: { author: string } }
 ) {
   try {
-    const author = await context.params.author;
+    const author = context.params.author; // ✅ no await here
 
     // Parse query params for pagination
     const url = new URL(request.url);
@@ -32,12 +32,12 @@ export async function GET(
       where: { author },
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' }, // optional: sort by date descending
+      orderBy: { createdAt: 'desc' },
     });
 
     const pages = Math.ceil(total / limit);
 
-    const response: PaginatedResponse<typeof activities[0]> = {
+    const response: PaginatedResponse<(typeof activities)[number]> = {
       success: true,
       data: activities,
       message: 'Activity retrieved successfully',
