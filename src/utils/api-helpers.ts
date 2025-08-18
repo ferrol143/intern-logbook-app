@@ -18,7 +18,7 @@ export function successResponse<T>(
 export function errorResponse(
   error: string,
   status = 500,
-  details?: any
+  details?: object
 ) {
   const response: ApiResponse = {
     success: false,

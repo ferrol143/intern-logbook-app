@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, Heart } from "lucide-react";
-import axios from "axios";
-import { ApiResponse } from "@/app/types/api";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { signIn } from 'next-auth/react';
 
 interface LoginFormData {

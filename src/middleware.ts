@@ -21,7 +21,7 @@ export function middleware(req: NextRequest) {
 
   if (isProtected) {
     // Check for NextAuth cookies (dev + prod)
-    const token = req.cookies.get('next-auth.session-token')?.value;
+    // const token = req.cookies.get('next-auth.session-token')?.value;
     // if(!token){
     //   // If no token, redirect to login
     //   const loginUrl = new URL('/auth/login', req.url);
