@@ -1,15 +1,14 @@
 import { prisma } from '../../../../../../lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { writeFile, mkdir, unlink } from 'fs/promises';
+import { unlink } from 'fs/promises';
 import path from 'path';
 
 // ====================
 // DELETE Activity
 // ====================
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = context.params.id;
+    const id = (await params).id;
 
     const activity = await prisma.activity.findUnique({ where: { id } });
     if (!activity) {
