@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/activities/delete/[id]/route": "/api/activities/delete/[id]",
+  "/api/activities/[author]/route": "/api/activities/[author]",
+  "/api/activities/route": "/api/activities",
+  "/api/activities/update/[id]/route": "/api/activities/update/[id]",
+  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
+  "/api/users/route": "/api/users",
+  "/favicon.ico/route": "/favicon.ico",
+  "/auth/login/page": "/auth/login",
+  "/dashboard/ferrol-azki/page": "/dashboard/ferrol-azki",
+  "/page": "/",
+  "/dashboard/noyaa/page": "/dashboard/noyaa"
+}
