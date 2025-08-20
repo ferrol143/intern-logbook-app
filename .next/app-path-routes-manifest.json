@@ -1,14 +1,14 @@
 {
+  "/api/activities/[author]/route": "/api/activities/[author]",
   "/api/activities/delete/[id]/route": "/api/activities/delete/[id]",
   "/api/activities/route": "/api/activities",
-  "/_not-found/page": "/_not-found",
-  "/api/activities/[author]/route": "/api/activities/[author]",
   "/api/activities/update/[id]/route": "/api/activities/update/[id]",
   "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
   "/api/users/route": "/api/users",
+  "/_not-found/page": "/_not-found",
   "/favicon.ico/route": "/favicon.ico",
-  "/dashboard/noyaa/page": "/dashboard/noyaa",
+  "/auth/login/page": "/auth/login",
   "/dashboard/ferrol-azki/page": "/dashboard/ferrol-azki",
   "/page": "/",
-  "/auth/login/page": "/auth/login"
+  "/dashboard/noyaa/page": "/dashboard/noyaa"
 }
