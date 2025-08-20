@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 
 interface LoginFormData {
   email: string;
-  password : string;
+  password: string;
 }
 
 export default function Login() {
@@ -17,7 +19,7 @@ export default function Login() {
     password: ""
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -28,29 +30,106 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+
+    // Validation
+    if (!formData.email || !formData.password) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Oops!',
+        text: 'Mohon lengkapi semua field yang diperlukan',
+        confirmButtonColor: '#f43f5e',
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Email Tidak Valid',
+        text: 'Mohon masukkan email yang valid',
+        confirmButtonColor: '#f43f5e',
+      });
+      return;
+    }
 
     try {
       setLoading(true);
+      
+      // Show loading alert
+      Swal.fire({
+        title: 'Sedang masuk...',
+        text: 'Mohon tunggu sebentar',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       const result = await signIn('credentials', {
-        redirect: false, // stay on the page
-        email: formData.email,
+        redirect: false,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
 
-      setLoading(false);
+      console.log('Login result:', result);
+      
+      Swal.close(); // Close loading alert
 
       if (result?.error) {
-        setError(result.error); // show NextAuth error
-      } else {
-        console.log('Login successful!');
+        // Show error alert
+        let errorMessage = 'Terjadi kesalahan saat login';
+        
+        switch (result.error) {
+          case 'CredentialsSignin':
+            errorMessage = 'Email atau password tidak valid';
+            break;
+          case 'CallbackRouteError':
+            errorMessage = 'Terjadi kesalahan pada server. Silakan coba lagi.';
+            break;
+          default:
+            errorMessage = result.error;
+        }
+
+        await Swal.fire({
+          icon: 'error',
+          title: 'Login Gagal',
+          text: errorMessage,
+          confirmButtonColor: '#f43f5e',
+        });
+      } else if (result?.ok) {
+        // Success
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Login berhasil, mengalihkan ke dashboard...',
+          timer: 1500,
+          showConfirmButton: false,
+          confirmButtonColor: '#f43f5e',
+        });
+        
+        // Clear form
         setFormData({ email: '', password: '' });
-        window.location.href = '/dashboard/noyaa';
+        
+        // Redirect to dashboard
+        router.push('/dashboard/noyaa');
       }
     } catch (err) {
-        setError('Unexpected error occurred');
-        console.error(err);
-        setLoading(false);
+      console.error('Login error:', err);
+      Swal.close(); // Close loading alert if still open
+      
+      // Show unexpected error alert
+      await Swal.fire({
+        icon: 'error',
+        title: 'Terjadi Kesalahan',
+        text: 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.',
+        confirmButtonColor: '#f43f5e',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,6 +173,7 @@ export default function Login() {
                   className="block w-full rounded-xl border border-gray-300 bg-white pl-10 pr-3 py-3 text-gray-900 placeholder-gray-500 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-pink-400"
                   placeholder="masukkan@email.com"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -116,11 +196,13 @@ export default function Login() {
                   className="block w-full rounded-xl border border-gray-300 bg-white pl-10 pr-10 py-3 text-gray-900 placeholder-gray-500 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-pink-400"
                   placeholder="Masukkan password"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 disabled:opacity-50"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -131,56 +213,22 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              {/* <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
-                  Ingat saya
-                </label>
-              </div> */}
-              {/* <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-rose-600 hover:text-rose-500 dark:text-pink-400 dark:hover:text-pink-300"
-              >
-                Lupa password?
-              </Link> */}
-            </div>
-
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-3 font-semibold text-white shadow-lg transition-all hover:from-rose-600 hover:to-pink-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              disabled={loading}
+              className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-3 font-semibold text-white shadow-lg transition-all hover:from-rose-600 hover:to-pink-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:from-rose-500 disabled:hover:to-pink-500"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Sedang masuk...
+                </div>
+              ) : (
+                'Login'
+              )}
             </button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
           </form>
-
-          {/* <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-            <span className="px-4 text-sm text-gray-500 dark:text-gray-400">atau</span>
-            <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-          </div>
-
-          <button
-            type="button"
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Masuk dengan Google
-            </div>
-          </button> */}
 
           {/* Sign Up Link */}
           <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-300">
