@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { Plus, Download, Upload, Clock, Calendar, BarChart3, Edit2, Trash2, X, Activity, TrendingUp, Zap, Star, NotebookPen, Home, FileText, Settings, Mail, User, Menu } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { promise } from "zod"
 import axios from "axios"
+import Swal from "sweetalert2"
 import { ApiResponse, PaginatedResponse } from "@/app/types/api"
 
 // =============================
@@ -46,6 +46,74 @@ interface StatisticsData {
 const formatTime = (timeString: string): string => {
   return timeString.substring(11, 16); // take "HH:mm" part
 }
+
+// =============================
+// SweetAlert2 Utility Functions
+// =============================
+const showSuccessAlert = (title: string, text?: string) => {
+  return Swal.fire({
+    title,
+    text,
+    icon: 'success',
+    confirmButtonText: 'OK',
+    confirmButtonColor: '#ec4899',
+    background: '#ffffff',
+    customClass: {
+      popup: 'rounded-2xl',
+      confirmButton: 'rounded-xl px-6 py-3'
+    }
+  });
+};
+
+const showErrorAlert = (title: string, text?: string) => {
+  return Swal.fire({
+    title,
+    text,
+    icon: 'error',
+    confirmButtonText: 'OK',
+    confirmButtonColor: '#dc2626',
+    background: '#ffffff',
+    customClass: {
+      popup: 'rounded-2xl',
+      confirmButton: 'rounded-xl px-6 py-3'
+    }
+  });
+};
+
+const showConfirmDialog = (title: string, text: string, confirmText: string = 'Ya, Hapus!') => {
+  return Swal.fire({
+    title,
+    text,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: confirmText,
+    cancelButtonText: 'Batal',
+    background: '#ffffff',
+    customClass: {
+      popup: 'rounded-2xl',
+      confirmButton: 'rounded-xl px-6 py-3',
+      cancelButton: 'rounded-xl px-6 py-3'
+    }
+  });
+};
+
+const showLoadingAlert = (title: string) => {
+  return Swal.fire({
+    title,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    background: '#ffffff',
+    customClass: {
+      popup: 'rounded-2xl'
+    },
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+};
 
 // =============================
 // Enhanced Modal Component
@@ -414,7 +482,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, sidebarOpen }) => (
 )
 
 // =============================
-// Activity Form Component - UPDATED FOR MULTIPART FORM DATA
+// Activity Form Component - UPDATED WITH SWEETALERT2
 // =============================
 interface ActivityFormProps {
   isOpen: boolean
@@ -544,6 +612,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 
     setIsSubmitting(true)
     
+    // Show loading alert
+    showLoadingAlert(initialData ? "Mengupdate kegiatan..." : "Menyimpan kegiatan...");
+    
     try {
       const author = pathname.includes("ferrol-azki") ? "ferrol-azki" : "noyaaa";
       
@@ -579,6 +650,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             proof: response.data.data.proof || initialData.proof
           }
           onSubmit(updatedActivity)
+          
+          Swal.close();
+          await showSuccessAlert("Berhasil!", "Kegiatan berhasil diupdate");
 
         } else {
           throw new Error(response.data.error || 'Failed to update activity')
@@ -607,6 +681,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             proof: response.data.data.proof
           }
           onSubmit(newActivity)
+          
+          Swal.close();
+          await showSuccessAlert("Berhasil!", "Kegiatan berhasil ditambahkan");
         } else {
           throw new Error(response.data.error || 'Failed to create activity')
         }
@@ -618,6 +695,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       setErrors({})
     } catch (error) {
       console.error('Error submitting activity:', error)
+      
+      Swal.close();
       
       // Handle different types of errors
       if (axios.isAxiosError(error)) {
@@ -632,14 +711,15 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               }
             })
             setErrors(newErrors)
+            await showErrorAlert("Validasi Error", "Mohon periksa kembali form yang diisi");
           } else {
-            alert(error.response.data?.error || 'Validation error occurred')
+            await showErrorAlert("Error", error.response.data?.error || 'Validation error occurred');
           }
         } else {
-          alert(error.response?.data?.error || 'An error occurred while submitting the form')
+          await showErrorAlert("Error", error.response?.data?.error || 'Terjadi kesalahan saat menyimpan data');
         }
       } else {
-        alert('Network error occurred. Please try again.')
+        await showErrorAlert("Network Error", 'Terjadi kesalahan jaringan. Silakan coba lagi.');
       }
     } finally {
       setIsSubmitting(false)
@@ -786,7 +866,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
 }
 
 // =============================
-// Activity Table Component
+// Activity Table Component - UPDATED WITH SWEETALERT2
 // =============================
 interface ActivityTableProps {
   activities: Activity[]
@@ -817,9 +897,15 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activities, onEdit, onDel
     return option ? option.label : value
   }, [])
 
-  const handleDelete = useCallback((id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')) {
-      onDelete(id)
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await showConfirmDialog(
+      'Apakah Anda yakin?',
+      'Kegiatan yang dihapus tidak dapat dikembalikan!',
+      'Ya, Hapus!'
+    );
+    
+    if (result.isConfirmed) {
+      onDelete(id);
     }
   }, [onDelete])
 
@@ -837,14 +923,16 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activities, onEdit, onDel
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse" role="table">
+      <table className="min-w-max w-full border-collapse" role="table">
         <thead>
           <tr className="border-b border-pink-200">
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Tanggal</th>
+            <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Bukti</th>
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Kegiatan</th>
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Jenis</th>
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Waktu</th>
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Tipe</th>
+            <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Deskripsi</th>
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Lokasi</th>
             <th scope="col" className="text-left py-4 px-6 font-semibold text-gray-700 bg-gradient-to-r from-pink-50 to-rose-50/30">Aksi</th>
           </tr>
@@ -856,6 +944,9 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activities, onEdit, onDel
               className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-pink-50/50 hover:to-rose-50/50 transition-all duration-300"
             >
               <td className="py-4 px-6 font-medium text-gray-900">{formatDate(activity.createdAt)}</td>
+              <td className="py-4 px-6 font-medium text-gray-900">
+                <img src={`${activity.proof}`} alt="Proof" className="h-20 w-auto object-cover rounded" />
+              </td>
               <td className="py-4 px-6">
                 <div className="font-semibold text-gray-900">{activity.activity}</div>
               </td>
@@ -880,6 +971,11 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activities, onEdit, onDel
                 }`}>
                   {getTipePekerjaanLabel(activity.work_type)}
                 </span>
+              </td>
+              <td className="py-4 px-6 text-gray-600 max-w-xs">
+                <div className="truncate" title={activity.description}>
+                  {activity.description || 'Tidak ada deskripsi'}
+                </div>
               </td>
               <td className="py-4 px-6 text-gray-600 max-w-xs">
                 <div className="truncate" title={activity.location}>
@@ -917,38 +1013,54 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activities, onEdit, onDel
 }
 
 // =============================
-// Utility functions for CSV export/import
+// Utility functions for CSV export/import - UPDATED WITH SWEETALERT2
 // =============================
-const exportToCSV = (activities: Activity[]): void => {
-  const headers = ['Tanggal', 'Waktu Mulai', 'Waktu Selesai', 'Kegiatan', 'Deskripsi']
-  const csvContent = [
-    headers.join(','),
-    ...activities.map(activity => [
-      activity.activity,
-      activity.start_time,
-      activity.end_time,
-      `"${activity.activity.replace(/"/g, '""')}"`,
-      `"${(activity.description || '').replace(/"/g, '""')}"`
-    ].join(','))
-  ].join('\n')
+const exportToCSV = async (activities: Activity[]): Promise<void> => {
+  try {
+    showLoadingAlert("Menyiapkan file CSV...");
+    
+    const headers = ['Tanggal', 'Waktu Mulai', 'Waktu Selesai', 'Kegiatan', 'Deskripsi']
+    const csvContent = [
+      headers.join(','),
+      ...activities.map(activity => [
+        activity.activity,
+        activity.start_time,
+        activity.end_time,
+        `"${activity.activity.replace(/"/g, '""')}"`,
+        `"${(activity.description || '').replace(/"/g, '""')}"`
+      ].join(','))
+    ].join('\n')
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `logbook-aktivitas-${new Date().toISOString().split('T')[0]}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  window.URL.revokeObjectURL(url)
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `logbook-aktivitas-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    Swal.close();
+    await showSuccessAlert("Berhasil!", "File CSV berhasil didownload");
+  } catch (error) {
+    Swal.close();
+    await showErrorAlert("Error", "Gagal mengexport file CSV");
+  }
 }
 
-const importFromCSV = (file: File, callback: (activities: Activity[]) => void): void => {
+const importFromCSV = async (file: File, callback: (activities: Activity[]) => void): Promise<void> => {
+  showLoadingAlert("Mengimport file CSV...");
+  
   const reader = new FileReader()
-  reader.onload = (e: ProgressEvent<FileReader>) => {
+  reader.onload = async (e: ProgressEvent<FileReader>) => {
     try {
       const text = (e.target?.result as string) || ''
-      if (!text) return
+      if (!text) {
+        Swal.close();
+        await showErrorAlert("Error", "File CSV kosong atau tidak valid");
+        return;
+      }
 
       const lines = text.split('\n')
 
@@ -974,19 +1086,24 @@ const importFromCSV = (file: File, callback: (activities: Activity[]) => void): 
       .filter(activity => activity.createdAt && activity.start_time && activity.end_time && activity.activity)
 
       callback(importedActivities)
+      
+      Swal.close();
+      await showSuccessAlert("Berhasil!", `${importedActivities.length} kegiatan berhasil diimport`);
     } catch (error) {
       console.error('Error parsing CSV:', error)
-      alert('Error parsing CSV file. Please check the format.')
+      Swal.close();
+      await showErrorAlert("Error", "Format file CSV tidak valid. Mohon periksa format file.");
     }
   }
-  reader.onerror = () => {
-    alert('Error reading file')
+  reader.onerror = async () => {
+    Swal.close();
+    await showErrorAlert("Error", "Gagal membaca file");
   }
   reader.readAsText(file)
 }
 
 // =============================
-// Main Dashboard Layout with Fixed Sidebar - UPDATED HANDLERS
+// Main Dashboard Layout - UPDATED WITH SWEETALERT2
 // =============================
 function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -1014,7 +1131,7 @@ function DashboardLayout() {
       }
     } catch (error) {
       console.error("Error fetching activities:", error);
-      alert("Failed to load activities. Please try again later.");
+      await showErrorAlert("Error", "Gagal memuat data kegiatan. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -1096,17 +1213,22 @@ function DashboardLayout() {
 
   const handleDeleteActivity = useCallback(async (id: string) => {
     try {
+      showLoadingAlert("Menghapus kegiatan...");
+      
       // Call API to delete the activity
       const response = await axios.delete(`/api/activities/delete/${id}`)
       
       if (response.data.success) {
         setActivities((prev) => prev.filter((a) => a.id !== id))
+        Swal.close();
+        await showSuccessAlert("Berhasil!", "Kegiatan berhasil dihapus");
       } else {
         throw new Error(response.data.error || 'Failed to delete activity')
       }
     } catch (error) {
       console.error('Error deleting activity:', error)
-      alert('Failed to delete activity. Please try again.')
+      Swal.close();
+      await showErrorAlert("Error", "Gagal menghapus kegiatan. Silakan coba lagi.");
     }
   }, [])
 
