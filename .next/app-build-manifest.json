@@ -14,6 +14,14 @@
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/activities/[author]/route-a64cc936f1874ec6.js"
     ],
+    "/layout": [
+      "static/chunks/webpack-b47fd1548851b972.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-7a34cadcb7695cec.js",
+      "static/chunks/main-app-fdb9ca7b464699d8.js",
+      "static/css/5276ada77038048d.css",
+      "static/chunks/app/layout-0e376057f9f7416b.js"
+    ],
     "/api/activities/delete/[id]/route": [
       "static/chunks/webpack-b47fd1548851b972.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
@@ -28,13 +36,6 @@
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/activities/route-a64cc936f1874ec6.js"
     ],
-    "/api/activities/update/[id]/route": [
-      "static/chunks/webpack-b47fd1548851b972.js",
-      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
-      "static/chunks/964-7a34cadcb7695cec.js",
-      "static/chunks/main-app-fdb9ca7b464699d8.js",
-      "static/chunks/app/api/activities/update/[id]/route-a64cc936f1874ec6.js"
-    ],
     "/api/auth/[...nextauth]/route": [
       "static/chunks/webpack-b47fd1548851b972.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
@@ -42,20 +43,19 @@
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/auth/[...nextauth]/route-a64cc936f1874ec6.js"
     ],
+    "/api/activities/update/[id]/route": [
+      "static/chunks/webpack-b47fd1548851b972.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-7a34cadcb7695cec.js",
+      "static/chunks/main-app-fdb9ca7b464699d8.js",
+      "static/chunks/app/api/activities/update/[id]/route-a64cc936f1874ec6.js"
+    ],
     "/api/users/route": [
       "static/chunks/webpack-b47fd1548851b972.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
       "static/chunks/964-7a34cadcb7695cec.js",
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/users/route-a64cc936f1874ec6.js"
-    ],
-    "/layout": [
-      "static/chunks/webpack-b47fd1548851b972.js",
-      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
-      "static/chunks/964-7a34cadcb7695cec.js",
-      "static/chunks/main-app-fdb9ca7b464699d8.js",
-      "static/css/5276ada77038048d.css",
-      "static/chunks/app/layout-0e376057f9f7416b.js"
     ],
     "/auth/login/page": [
       "static/chunks/webpack-b47fd1548851b972.js",
@@ -74,7 +74,7 @@
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/41ade5dc-11e8060b2a869913.js",
       "static/chunks/850-f2bf9e81a494b44a.js",
-      "static/chunks/app/dashboard/ferrol-azki/page-920c0effa7ef5f10.js"
+      "static/chunks/app/dashboard/ferrol-azki/page-e5b1b930ac8e14ea.js"
     ],
     "/page": [
       "static/chunks/webpack-b47fd1548851b972.js",

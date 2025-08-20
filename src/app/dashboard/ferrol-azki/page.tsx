@@ -58,6 +58,7 @@ const showSuccessAlert = (title: string, text?: string) => {
     confirmButtonText: 'OK',
     confirmButtonColor: '#ec4899',
     background: '#ffffff',
+    timer: 2000,
     customClass: {
       popup: 'rounded-2xl',
       confirmButton: 'rounded-xl px-6 py-3'
@@ -73,6 +74,7 @@ const showErrorAlert = (title: string, text?: string) => {
     confirmButtonText: 'OK',
     confirmButtonColor: '#dc2626',
     background: '#ffffff',
+    timer: 2000,
     customClass: {
       popup: 'rounded-2xl',
       confirmButton: 'rounded-xl px-6 py-3'

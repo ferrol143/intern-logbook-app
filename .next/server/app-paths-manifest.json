@@ -1,11 +1,11 @@
 {
   "/api/activities/[author]/route": "app/api/activities/[author]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/activities/delete/[id]/route": "app/api/activities/delete/[id]/route.js",
   "/api/activities/route": "app/api/activities/route.js",
-  "/api/activities/update/[id]/route": "app/api/activities/update/[id]/route.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/activities/update/[id]/route": "app/api/activities/update/[id]/route.js",
   "/api/users/route": "app/api/users/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/auth/login/page": "app/auth/login/page.js",
   "/dashboard/ferrol-azki/page": "app/dashboard/ferrol-azki/page.js",
