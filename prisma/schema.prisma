@@ -36,7 +36,7 @@ model Activity {
   end_time      DateTime
   work_type     String
   location      String
-  description   String?   // optional
+  description   String?   @db.Text
   proof         String?   // stores file path or URL
   
   createdAt     DateTime  @default(now())

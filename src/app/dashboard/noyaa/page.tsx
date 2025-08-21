@@ -12,8 +12,8 @@ import { ApiResponse, PaginatedResponse } from "@/app/types/api"
 // =============================
 interface Activity {
   readonly id: string
+  readonly date: string
   readonly author: string
-  readonly createdAt: string
   readonly activity: string
   readonly type: string
   readonly start_time: string
@@ -21,7 +21,7 @@ interface Activity {
   readonly work_type: string
   readonly location: string
   readonly description?: string
-  readonly proof?: string
+  readonly proof?: string | null
 }
 
 interface ActivityFormData {
@@ -58,6 +58,7 @@ const showSuccessAlert = (title: string, text?: string) => {
     confirmButtonText: 'OK',
     confirmButtonColor: '#ec4899',
     background: '#ffffff',
+    timer: 2000,
     customClass: {
       popup: 'rounded-2xl',
       confirmButton: 'rounded-xl px-6 py-3'
@@ -73,6 +74,7 @@ const showErrorAlert = (title: string, text?: string) => {
     confirmButtonText: 'OK',
     confirmButtonColor: '#dc2626',
     background: '#ffffff',
+    timer: 2000,
     customClass: {
       popup: 'rounded-2xl',
       confirmButton: 'rounded-xl px-6 py-3'
@@ -544,7 +546,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     if (initialData) {
       setFormData({
         author: initialData.author,
-        tanggal: formatDate(initialData.createdAt),
+        tanggal: formatDate(initialData.date),
         kegiatan: initialData.activity,
         jenisKegiatan: initialData.type,
         waktuMulai: formatTime(initialData.start_time),
@@ -943,7 +945,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activities, onEdit, onDel
               key={activity.id}
               className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-pink-50/50 hover:to-rose-50/50 transition-all duration-300"
             >
-              <td className="py-4 px-6 font-medium text-gray-900">{formatDate(activity.createdAt)}</td>
+              <td className="py-4 px-6 font-medium text-gray-900">{formatDate(activity.date)}</td>
               <td className="py-4 px-6 font-medium text-gray-900">
                 <img src={`${activity.proof}`} alt="Proof" className="h-20 w-auto object-cover rounded" />
               </td>
@@ -1049,7 +1051,19 @@ const exportToCSV = async (activities: Activity[]): Promise<void> => {
   }
 }
 
-const importFromCSV = async (file: File, callback: (activities: Activity[]) => void): Promise<void> => {
+const importFromCSV = async (file: File, callback: (activities: {
+        id: string,
+        author: string,
+        tanggal: string,
+        kegiatan: string,
+        jenisKegiatan: string,
+        waktuMulai: string,
+        waktuSelesai: string,
+        tipePekerjaan: string,
+        lokasi: string,
+        keterangan: string,
+        proof?: string | null
+      }[]) => void): Promise<void> => {
   showLoadingAlert("Mengimport file CSV...");
   
   const reader = new FileReader()
@@ -1062,33 +1076,421 @@ const importFromCSV = async (file: File, callback: (activities: Activity[]) => v
         return;
       }
 
-      const lines = text.split('\n')
+      console.log('CSV content:', text)
 
-      const importedActivities: Activity[] = lines.slice(1)
+      // Split by lines and properly parse CSV with robust handling
+      const lines = text.split(/\r?\n/) // Handle both \n and \r\n line endings
+      
+      const importedActivities: {
+        id: string,
+        author: string,
+        tanggal: string,
+        kegiatan: string,
+        jenisKegiatan: string,
+        waktuMulai: string,
+        waktuSelesai: string,
+        tipePekerjaan: string,
+        lokasi: string,
+        keterangan: string,
+        proof?: string | null
+      }[] = lines.slice(1)
       .filter(line => line.trim())
       .map((line, index) => {
-        const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || []
-        const cleanValues = values.map(val => val.replace(/^"|"$/g, '').replace(/""/g, '"').trim())
+        // Robust CSV parsing function
+        const parseCSVLine = (line: string): string[] => {
+          const values = []
+          let current = ''
+          let inQuotes = false
+          let escapeNext = false
+          
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i]
+            const nextChar = line[i + 1]
+            
+            if (escapeNext) {
+              current += char
+              escapeNext = false
+            } else if (char === '\\' && inQuotes) {
+              escapeNext = true
+            } else if (char === '"') {
+              if (inQuotes && nextChar === '"') {
+                // Handle escaped quotes ("")
+                current += char
+                i++ // Skip next quote
+              } else {
+                inQuotes = !inQuotes
+              }
+            } else if (char === ',' && !inQuotes) {
+              values.push(current)
+              current = ''
+            } else {
+              current += char
+            }
+          }
+          values.push(current) // Push the last value
+          
+          return values
+        }
+        
+        const rawValues = parseCSVLine(line)
+        
+        // Clean and normalize values with comprehensive handling
+        const cleanValues = rawValues.map((val, idx) => {
+          if (val === null || val === undefined) return ''
+          
+          let cleaned = String(val)
+            .replace(/^["'\s]+|["'\s]+$/g, '') // Remove quotes and whitespace from start/end
+            .replace(/""/g, '"') // Handle escaped quotes
+            .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
+            .trim()
+          
+          // Handle various empty value representations
+          if (cleaned === 'null' || cleaned === 'NULL' || 
+              cleaned === 'undefined' || cleaned === 'n/a' || 
+              cleaned === 'N/A' || cleaned === '-' || 
+              cleaned === '' || cleaned === ' ') {
+            cleaned = ''
+          }
+          
+          return cleaned
+        })
+        
+        console.log('Parsed values:', cleanValues)
+
+        // Parse date from various formats to proper format
+        const parseDateString = (dateStr: string): string => {
+          if (!dateStr) return new Date().toISOString()
+          
+          try {
+            // Handle various date formats
+            let normalizedDate = dateStr.toLowerCase().trim()
+            
+            // Remove common prefixes/suffixes
+            normalizedDate = normalizedDate.replace(/^(date|tanggal):\s*/i, '')
+            
+            // Handle DD/MM/YYYY or DD-MM-YYYY format
+            const ddmmyyyy = normalizedDate.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/)
+            if (ddmmyyyy) {
+              let [, day, month, year] = ddmmyyyy
+              day = day.padStart(2, '0')
+              month = month.padStart(2, '0')
+              
+              // Handle 2-digit years
+              if (year.length === 2) {
+                const currentYear = new Date().getFullYear()
+                const currentCentury = Math.floor(currentYear / 100) * 100
+                year = String(currentCentury + parseInt(year))
+              }
+              
+              const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+              if (!isNaN(date.getTime())) {
+                return date.toISOString().split("T")[0]
+              }
+            }
+            
+            // Handle MM/DD/YYYY format
+            const mmddyyyy = normalizedDate.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/)
+            if (mmddyyyy) {
+              let [, month, day, year] = mmddyyyy
+              // Try MM/DD/YYYY if DD/MM/YYYY failed
+              if (parseInt(month) <= 12) {
+                const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+                if (!isNaN(date.getTime())) {
+                  return date.toISOString().split("T")[0]
+                }
+              }
+            }
+            
+            // Handle YYYY-MM-DD format
+            const yyyymmdd = normalizedDate.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/)
+            if (yyyymmdd) {
+              const [, year, month, day] = yyyymmdd
+              const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+              if (!isNaN(date.getTime())) {
+                return date.toISOString().split("T")[0]
+              }
+            }
+            
+            // Handle relative dates
+            if (normalizedDate.includes('today') || normalizedDate.includes('hari ini')) {
+              return new Date().toISOString()
+            }
+            if (normalizedDate.includes('yesterday') || normalizedDate.includes('kemarin')) {
+              const yesterday = new Date()
+              yesterday.setDate(yesterday.getDate() - 1)
+              return yesterday.toISOString()
+            }
+            if (normalizedDate.includes('tomorrow') || normalizedDate.includes('besok')) {
+              const tomorrow = new Date()
+              tomorrow.setDate(tomorrow.getDate() + 1)
+              return tomorrow.toISOString()
+            }
+            
+            // Handle timestamp (Unix timestamp)
+            if (/^\d{10}$/.test(normalizedDate)) {
+              return new Date(parseInt(normalizedDate) * 1000).toISOString()
+            }
+            if (/^\d{13}$/.test(normalizedDate)) {
+              return new Date(parseInt(normalizedDate)).toISOString()
+            }
+            
+            // Fallback to native Date parsing
+            const date = new Date(dateStr)
+            return isNaN(date.getTime()) ? date.toISOString().split("T")[0] : date.toISOString().split("T")[0]
+            
+          } catch (error) {
+            console.warn('Date parsing error for:', dateStr, error)
+            return new Date().toISOString()
+          }
+        }
+
+        // Parse time and combine with date - handle various time formats
+        const parseTimeString = (timeStr: string, baseDate: string): string => {
+          if (!timeStr) return ''
+          
+          try {
+            let normalizedTime = timeStr.toLowerCase().trim()
+            
+            // Remove common prefixes/suffixes
+            normalizedTime = normalizedTime.replace(/^(time|waktu|jam):\s*/i, '')
+            normalizedTime = normalizedTime.replace(/\s*(am|pm|wib|wit|wita)$/i, '')
+            
+            let hours = 0, minutes = 0, seconds = 0
+            const isPM = /pm$/i.test(timeStr)
+            const isAM = /am$/i.test(timeStr)
+            
+            // Handle HH:MM:SS format
+            let timeMatch = normalizedTime.match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})$/)
+            if (timeMatch) {
+              hours = parseInt(timeMatch[1])
+              minutes = parseInt(timeMatch[2])
+              seconds = parseInt(timeMatch[3])
+            } else {
+              // Handle HH:MM format
+              timeMatch = normalizedTime.match(/^(\d{1,2}):(\d{1,2})$/)
+              if (timeMatch) {
+                hours = parseInt(timeMatch[1])
+                minutes = parseInt(timeMatch[2])
+              } else {
+                // Handle H or HH format (hours only)
+                timeMatch = normalizedTime.match(/^(\d{1,2})$/)
+                if (timeMatch) {
+                  hours = parseInt(timeMatch[1])
+                }
+              }
+            }
+            
+            // Handle 12-hour format
+            if (isPM && hours < 12) hours += 12
+            if (isAM && hours === 12) hours = 0
+            
+            // Validate time values
+            if (hours < 0 || hours > 23) hours = 0
+            if (minutes < 0 || minutes > 59) minutes = 0
+            if (seconds < 0 || seconds > 59) seconds = 0
+            
+            const date = new Date(baseDate)
+            
+            // Handle special cases
+            if (
+              normalizedTime === '0:00:00' || normalizedTime === '00:00:00' || 
+              normalizedTime === '24:00:00' || normalizedTime === '0:00'
+            ) {
+              if (timeStr === normalizedTime && hours === 0) {
+                date.setDate(date.getDate() + 1)
+              }
+            }
+            
+            date.setHours(hours, minutes, seconds, 0)
+            
+            if (!isNaN(date.getTime())) {
+              return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+            }
+            
+            return ''
+          } catch (error) {
+            console.warn('Time parsing error for:', timeStr, error)
+            return ''
+          }
+        }
+
+        const formattedDate = parseDateString(cleanValues[0])
+        const startTime = parseTimeString(cleanValues[5], formattedDate)
+        const endTime = parseTimeString(cleanValues[6], formattedDate)
+
+        // Map work type from various representations to expected values
+        const mapWorkType = (workTypeStr: string): string => {
+          if (!workTypeStr) return 'offline' // default
+          
+          const normalized = workTypeStr.toLowerCase().trim()
+          
+          // Online variations
+          if (normalized.includes('online') || normalized.includes('daring') || 
+              normalized.includes('virtual') || normalized.includes('remote') ||
+              normalized.includes('digital') || normalized.includes('web') ||
+              normalized === 'ol' || normalized === 'on') {
+            return 'online'
+          }
+          
+          // Hybrid variations  
+          if (normalized.includes('hybrid') || normalized.includes('campuran') ||
+              normalized.includes('blended') || normalized.includes('mixed') ||
+              normalized.includes('kombinasi')) {
+            return 'hybrid'
+          }
+          
+          // Offline variations (default)
+          if (normalized.includes('offline') || normalized.includes('luring') ||
+              normalized.includes('onsite') || normalized.includes('fisik') ||
+              normalized.includes('langsung') || normalized.includes('tatap muka') ||
+              normalized === 'off' || normalized === 'of') {
+            return 'offline'
+          }
+          
+          return 'offline' // default fallback
+        }
+
+        // Parse and normalize text fields
+        const normalizeText = (text: string, maxLength?: number): string => {
+          if (!text) return ''
+          
+          let normalized = String(text)
+            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+            .replace(/[\r\n\t]/g, ' ') // Replace line breaks and tabs with space
+            .trim()
+          
+          // Remove common placeholder texts
+          if (normalized.toLowerCase() === 'tidak ada' ||
+              normalized.toLowerCase() === 'kosong' ||
+              normalized.toLowerCase() === 'empty' ||
+              normalized.toLowerCase() === 'none' ||
+              normalized === '-' || normalized === '—') {
+            normalized = ''
+          }
+          
+          // Truncate if needed
+          if (maxLength && normalized.length > maxLength) {
+            normalized = normalized.substring(0, maxLength).trim()
+          }
+          
+          return normalized
+        }
+
+        // Parse location with fallback options
+        const parseLocation = (primaryLocation: string, fallbackLocation: string): string => {
+          const primary = normalizeText(primaryLocation)
+          const fallback = normalizeText(fallbackLocation)
+          
+          if (primary) return primary
+          if (fallback) return fallback
+          return 'Tidak diketahui'
+        }
+
+        // Parse activity type with mapping
+        const mapActivityType = (typeStr: string): string => {
+          if (!typeStr) return 'berita-kegiatan' // default
+          
+          const normalized = typeStr.toLowerCase().trim()
+          
+          // Map common Indonesian activity types
+          const typeMapping = {
+            'online': 'online',
+            'hybrid': 'hybrid', 
+            'offline': 'offline',
+          }
+          
+          for (const [key, value] of Object.entries(typeMapping)) {
+            if (normalized.includes(key)) {
+              return value
+            }
+          }
+          
+          return normalizeText(typeStr) || 'berita-kegiatan'
+        }
 
         return {
           id: `imported-${Date.now()}-${index}`,
-          author: 'Imported',
-          createdAt: cleanValues[0] || '',
-          start_time: cleanValues[1] || '',
-          end_time: cleanValues[2] || '',
-          activity: cleanValues[3] || '',
-          description: cleanValues[4] || '',
-          type: cleanValues[5] || 'berita-kegiatan', // default value
-          work_type: cleanValues[6] || 'online', // default value
-          location: cleanValues[7] || 'Tidak diketahui', // default value
+          author: cleanValues[1] || 'Imported',
+          tanggal: formattedDate,
+          waktuMulai: startTime,
+          waktuSelesai: endTime,
+          kegiatan: cleanValues[3] || '',
+          keterangan: cleanValues[8] || 'Tidak ada deskripsi',
+          jenisKegiatan: cleanValues[4] || 'berita-kegiatan',
+          tipePekerjaan: mapWorkType(cleanValues[7] || 'offline'),
+          lokasi: cleanValues[11] || cleanValues[9] || 'Tidak diketahui', // Column 11 is "Lokasi Kegiatan"
+          proof: cleanValues[2] || null
         }
       })
-      .filter(activity => activity.createdAt && activity.start_time && activity.end_time && activity.activity)
+      .filter(activity => {
+        const isValid = activity.tanggal && 
+                        activity.waktuMulai && 
+                        activity.waktuSelesai && 
+                        activity.kegiatan.trim()
+        
+        if (!isValid) {
+          console.log('Filtered out invalid activity:', activity)
+        }
+        
+        return isValid
+      })
 
-      callback(importedActivities)
-      
-      Swal.close();
-      await showSuccessAlert("Berhasil!", `${importedActivities.length} kegiatan berhasil diimport`);
+      console.log('Final imported activities:', importedActivities)
+
+      try {
+        const response = await axios.post<ApiResponse>('/api/activities', importedActivities, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.data.success) {
+          callback(importedActivities);
+          Swal.close();
+          await showSuccessAlert("Berhasil!", `${importedActivities.length} kegiatan berhasil diimport`);
+          return;
+        }
+
+        // Jika success = false tapi tidak throw error
+        console.warn('API responded with success=false:', response.data);
+        Swal.close();
+        await showErrorAlert("Error", response.data.message || 'Terjadi kesalahan saat menyimpan data');
+
+      } catch (error: any) {
+        Swal.close();
+        
+        // Axios error handling
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          const data = error.response?.data;
+
+          // Validation errors
+          if (status === 400 && data?.details && Array.isArray(data.details)) {
+            const newErrors: Record<string, string> = {};
+            data.details.forEach((err: any) => {
+              if (err.path && err.path.length > 0 && err.message) {
+                newErrors[err.path[0]] = err.message;
+              }
+            });
+            await showErrorAlert("Validasi Error", "Mohon periksa kembali form yang diisi");
+            return;
+          }
+
+          // Server errors (5xx)
+          if (status && status >= 500) {
+            console.error('Server error:', data);
+            await showErrorAlert("Server Error", data?.error || 'Terjadi kesalahan server');
+            return;
+          }
+
+          // Other Axios errors (network, 4xx selain validation)
+          console.warn('API error response:', data);
+          await showErrorAlert("Error", data?.error || 'Terjadi kesalahan saat menyimpan data');
+          return;
+        }
+
+        // Non-Axios errors (unexpected)
+        console.error('Unexpected error:', error);
+        await showErrorAlert("Network Error", 'Terjadi kesalahan jaringan atau tidak diketahui. Silakan coba lagi.');
+      }
     } catch (error) {
       console.error('Error parsing CSV:', error)
       Swal.close();
@@ -1163,7 +1565,7 @@ function DashboardLayout() {
     let totalHours = 0
 
     activities.forEach((activity) => {
-      const activityDate = new Date(activity.createdAt)
+      const activityDate = new Date(activity.date)
       const [startHour, startMinute] = formatTime(activity.start_time).split(':').map(Number)
       const [endHour, endMinute] = formatTime(activity.end_time).split(':').map(Number)
 
@@ -1240,7 +1642,22 @@ function DashboardLayout() {
     const file = event.target.files?.[0]
     if (file) {
       importFromCSV(file, (importedActivities) => {
-        setActivities((prev) => [...prev, ...importedActivities])
+        // Callback to update the activities state with imported data
+        const mappedData = importedActivities.map(activity => ({
+          id: activity.id,
+          date: activity.tanggal,
+          author: activity.author,
+          activity: activity.kegiatan,
+          type: activity.jenisKegiatan,
+          start_time: activity.waktuMulai,
+          end_time: activity.waktuSelesai,
+          work_type: activity.tipePekerjaan,
+          location: activity.lokasi,
+          description: activity.keterangan,
+          proof: activity.proof || null
+      }))
+
+      setActivities((prev) => [...prev, ...mappedData])
       })
       event.target.value = ''
     }

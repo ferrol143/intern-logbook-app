@@ -16,7 +16,7 @@ export const createActivitySchema = z.object({
   tipePekerjaan: z.enum(TIPE_PEKERJAAN),
   lokasi: z.string().min(2).max(100),
   keterangan: z.string().max(255).optional(),
-  proof: z.string().optional(),
+  proof: z.string().nullable().optional(),
 }).refine(
   (data) => {
     if (data.waktuMulai && data.waktuSelesai) {
