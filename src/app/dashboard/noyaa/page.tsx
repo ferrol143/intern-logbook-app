@@ -1418,7 +1418,7 @@ const importFromCSV = async (file: File, callback: (activities: {
           keterangan: cleanValues[8] || 'Tidak ada deskripsi',
           jenisKegiatan: cleanValues[4] || 'berita-kegiatan',
           tipePekerjaan: mapWorkType(cleanValues[7] || 'offline'),
-          lokasi: cleanValues[11] || cleanValues[9] || 'Tidak diketahui', // Column 11 is "Lokasi Kegiatan"
+          lokasi: cleanValues[12] || 'Tidak diketahui', // Column 11 is "Lokasi Kegiatan"
           proof: cleanValues[2] || null
         }
       })
@@ -1543,12 +1543,20 @@ function DashboardLayout() {
     fetchActivities()
   }, []);
 
-  const handleNextPage = () => {
-    if (page < totalPages) setPage((prev) => prev + 1);
+  const handleNextPage = async () => {
+    if (page < totalPages) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      await fetchActivities(nextPage);
+    }
   };
 
-  const handlePrevPage = () => {
-    if (page > 1) setPage((prev) => prev - 1);
+  const handlePrevPage = async () => {
+    if (page > 1) {
+      const prevPage = page - 1;
+      setPage(prevPage);
+      await fetchActivities(prevPage);
+    }
   };
 
   // Calculate statistics with memoization

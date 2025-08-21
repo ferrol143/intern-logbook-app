@@ -1418,7 +1418,7 @@ const importFromCSV = async (file: File, callback: (activities: {
           keterangan: cleanValues[8] || 'Tidak ada deskripsi',
           jenisKegiatan: cleanValues[4] || 'berita-kegiatan',
           tipePekerjaan: mapWorkType(cleanValues[7] || 'offline'),
-          lokasi: cleanValues[11] || cleanValues[9] || 'Tidak diketahui', // Column 11 is "Lokasi Kegiatan"
+          lokasi: cleanValues[12] || 'Tidak diketahui', // Column 11 is "Lokasi Kegiatan"
           proof: cleanValues[2] || null
         }
       })

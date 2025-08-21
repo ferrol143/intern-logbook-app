@@ -22,19 +22,19 @@
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/activities/[author]/route-a64cc936f1874ec6.js"
     ],
-    "/api/activities/delete/[id]/route": [
-      "static/chunks/webpack-b47fd1548851b972.js",
-      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
-      "static/chunks/964-7a34cadcb7695cec.js",
-      "static/chunks/main-app-fdb9ca7b464699d8.js",
-      "static/chunks/app/api/activities/delete/[id]/route-a64cc936f1874ec6.js"
-    ],
     "/api/activities/route": [
       "static/chunks/webpack-b47fd1548851b972.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
       "static/chunks/964-7a34cadcb7695cec.js",
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/activities/route-a64cc936f1874ec6.js"
+    ],
+    "/api/activities/delete/[id]/route": [
+      "static/chunks/webpack-b47fd1548851b972.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-7a34cadcb7695cec.js",
+      "static/chunks/main-app-fdb9ca7b464699d8.js",
+      "static/chunks/app/api/activities/delete/[id]/route-a64cc936f1874ec6.js"
     ],
     "/api/activities/update/[id]/route": [
       "static/chunks/webpack-b47fd1548851b972.js",
@@ -57,6 +57,15 @@
       "static/chunks/main-app-fdb9ca7b464699d8.js",
       "static/chunks/app/api/users/route-a64cc936f1874ec6.js"
     ],
+    "/dashboard/ferrol-azki/page": [
+      "static/chunks/webpack-b47fd1548851b972.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-7a34cadcb7695cec.js",
+      "static/chunks/main-app-fdb9ca7b464699d8.js",
+      "static/chunks/41ade5dc-11e8060b2a869913.js",
+      "static/chunks/850-f2bf9e81a494b44a.js",
+      "static/chunks/app/dashboard/ferrol-azki/page-3fbea4413122343f.js"
+    ],
     "/auth/login/page": [
       "static/chunks/webpack-b47fd1548851b972.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
@@ -67,6 +76,15 @@
       "static/chunks/842-7b3fa4e0187d0572.js",
       "static/chunks/app/auth/login/page-fd7d4ef64c98b6e4.js"
     ],
+    "/dashboard/noyaa/page": [
+      "static/chunks/webpack-b47fd1548851b972.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-7a34cadcb7695cec.js",
+      "static/chunks/main-app-fdb9ca7b464699d8.js",
+      "static/chunks/41ade5dc-11e8060b2a869913.js",
+      "static/chunks/850-f2bf9e81a494b44a.js",
+      "static/chunks/app/dashboard/noyaa/page-9f95939768ec5e6b.js"
+    ],
     "/page": [
       "static/chunks/webpack-b47fd1548851b972.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
@@ -75,24 +93,6 @@
       "static/chunks/95-f8676a3bee788818.js",
       "static/chunks/362-428e4977bbcdc39c.js",
       "static/chunks/app/page-9ea6de92785c7441.js"
-    ],
-    "/dashboard/ferrol-azki/page": [
-      "static/chunks/webpack-b47fd1548851b972.js",
-      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
-      "static/chunks/964-7a34cadcb7695cec.js",
-      "static/chunks/main-app-fdb9ca7b464699d8.js",
-      "static/chunks/41ade5dc-11e8060b2a869913.js",
-      "static/chunks/850-f2bf9e81a494b44a.js",
-      "static/chunks/app/dashboard/ferrol-azki/page-ec9d4d1adc767318.js"
-    ],
-    "/dashboard/noyaa/page": [
-      "static/chunks/webpack-b47fd1548851b972.js",
-      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
-      "static/chunks/964-7a34cadcb7695cec.js",
-      "static/chunks/main-app-fdb9ca7b464699d8.js",
-      "static/chunks/41ade5dc-11e8060b2a869913.js",
-      "static/chunks/850-f2bf9e81a494b44a.js",
-      "static/chunks/app/dashboard/noyaa/page-fd5db793646aff50.js"
     ]
   }
 }
